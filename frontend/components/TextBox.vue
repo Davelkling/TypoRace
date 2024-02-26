@@ -7,7 +7,7 @@ let paragraphLength: number;
 const randomParagraph = ref("");
 let totalCharacters = 0;
 let isTimerRunning = ref(false);
-let finish = ref(false);
+let isFinished = ref(false);
 let starter = ref(false);
 let isControl = ref<boolean>(false);
 let characterCounter = 0;
@@ -23,7 +23,6 @@ const typedText = ref("");
 function getRandomParagraph() {
     if(paragraphs.value){
         paragraphLength = paragraphs.value.length
-        typedText.value = "";
         const randomIndex = Math.floor(Math.random() * paragraphLength);
         randomParagraph.value = paragraphs.value[randomIndex].paragraphText
             .split("")
@@ -36,10 +35,20 @@ function getRandomParagraph() {
         console.log(words.value);
         console.log(totalCharacters);
         isTimerRunning = ref(false);
-        finish.value = false;
         characterCounter = 0;
         mistake = 0;
+        accuracy = 0
+        wpm = 0;
         timer = ref(0);
+        isFinished.value = false;
+        
+        // Reset the input text
+        const inputElement = document.querySelector("input");
+        if (inputElement) {
+            console.log("input element = " + inputElement.value);
+            inputElement.value = "";
+
+        }
     }
 }
 
@@ -58,30 +67,26 @@ function initTyping() {
         isTimerRunning.value = true;
         let intervalId = setInterval(() => {
             timer.value++;
-            if (finish.value) {
-            clearInterval(intervalId);
+            if (isFinished.value) {
+                
+                clearInterval(intervalId);
+               
             }
+            
         }, 1000);
         }
 
-        if ((isControl.value as Boolean) === true) {
-        characterCounter = startOfWord;
-        isControl.value = false;
-        }
-
         if (characterCounter === totalCharacters - 1) {
-        finish.value = true;
-        wpm = Math.round(((characterCounter - mistake) / 5 / timer.value) * 60);
-        accuracy = Math.round(
-            ((characterCounter - mistake) / totalCharacters) * 100,
-        );
-        console.log(accuracy);
-        console.log(finish.value);
-        console.log("DONE");
-        console.log(timer.value);
-        console.log(characterCounter);
-        console.log(totalCharacters);
-        console.log(mistake);
+            isFinished.value = true;
+            wpm = Math.round(((characterCounter - mistake) / 5 / timer.value) * 60);
+            accuracy = Math.round(((characterCounter - mistake) / totalCharacters) * 100);
+            console.log(accuracy);
+            console.log(isFinished.value);
+            console.log("DONE");
+            console.log(timer.value);
+            console.log(characterCounter);
+            console.log(totalCharacters);
+            console.log(mistake);
         }
 
         if (splitType == null) {
@@ -108,11 +113,6 @@ function initTyping() {
             mistake++;
         }
         characterCounter++;
-        console.log(
-            "index = " + characterCounter,
-            "startOfWord = " + startOfWord,
-            "control" + isControl.value,
-        );
         }
 
         characters.forEach((span) => span.classList.remove("underline"));
@@ -143,51 +143,48 @@ onMounted(() => {
         class="flex flex-col justify-center items-center h-[70vh] w-full gap-4"
         >
         <div class="flex flex-col justify-center items-center gap-6 mb-12 w-full">
-            <div
-            v-if="!finish"
-            class="flex flex-col justify-center items-center w-full"
-            >
-            <div
-                v-if="starter"
-                class="flex justify-start items-center w-full gap-32 mb-4"
-            >
-                <p class="text-[#00ADB5] text-xl">Timer: {{ timer }}</p>
-                <p class="text-[#00ADB5] text-xl">
-                Remaining: {{ characterCounter }}/{{ totalCharacters }}
-                </p>
-            </div>
-            <div v-else class="w-full h-7 mb-4"></div>
             <div class="flex flex-col justify-center items-center w-full">
-                <transition name="fade" mode="out-in">
-                <p
-                    :key="randomParagraph"
-                    class="text-[#00ADB5] text-2xl text-center mb-6 font-semibold typing-text"
-                    v-html="randomParagraph"
-                ></p>
-                </transition>
-                <div class="">
-                <input
-                    type="text"
-                    v-model="typedText"
-                    @keyup="handleKeyDown"
-                    placeholder="Type to Start"
-                    class="text-white font-semibold text-xl placeholder-white placeholder placeholder-opacity-75 w-[40rem] h-[2.5rem] px-[1rem] border-2 rounded-md border-[#00ADB5] border-opacity-33 bg-[#033639] bg-opacity-17"
-                />
+                <div v-if="starter" class="flex justify-start items-center w-full gap-32 mb-4">
+                    <p class="text-[#00ADB5] text-xl">Timer: {{ timer }}</p>
+                    <p class="text-[#00ADB5] text-xl">
+                    Remaining: {{ characterCounter }}/{{ totalCharacters }}
+                    </p>
+                </div>
+                <div v-else class="flex justify-start items-center w-full gap-32 mb-4">
+                    <p class="text-[#00ADB5] text-xl">Timer: </p>
+                    <p class="text-[#00ADB5] text-xl">Remaining:</p>
+                </div>
+                <div class="flex flex-col justify-center items-center w-full">
+                    <transition name="fade" mode="out-in">
+                        <p :key="randomParagraph" class="text-[#00ADB5] text-2xl text-center mb-6 font-semibold typing-text" v-html="randomParagraph"></p>
+                    </transition>
+                    <div class="">
+                        <input
+                            type="text"
+                            v-model="typedText"
+                            @keyup="handleKeyDown"
+                            placeholder="Type to Start"
+                            class="text-white font-semibold text-xl placeholder-white placeholder placeholder-opacity-75 w-[40rem] h-[2.5rem] px-[1rem] border-2 rounded-md border-[#00ADB5] border-opacity-33 bg-[#033639] bg-opacity-17"
+                        />
+                    </div>
                 </div>
             </div>
-            </div>
-            <div v-else class="flex justify-center items-center gap-20">
-            <p class="text-[#00ADB5] text-xl">Time: {{ timer }}</p>
-            <p class="text-[#00ADB5] text-xl">WPM: {{ wpm }}</p>
-            <p class="text-[#00ADB5] text-xl">Mistakes: {{ mistake }}</p>
-            <p class="text-[#00ADB5] text-xl">Accuracy: %{{ accuracy }}</p>
-            </div>
+            <transition name="fade" mode="out-in">
+            <div :key="randomParagraph" class="flex justify-center items-center gap-20">
+                
+                <p class="text-[#00ADB5] text-xl">Time: {{ timer }}</p>
+                <p class="text-[#00ADB5] text-xl">WPM: {{ wpm }}</p>
+                <p class="text-[#00ADB5] text-xl">Mistakes: {{ mistake }}</p>
+                <p class="text-[#00ADB5] text-xl">Accuracy: %{{ accuracy }}</p>
+             </div>
+            </transition>
+            
             <div>
-            <span
-                @click="getRandomParagraph"
-                class="material-symbols-outlined text-2xl font-bold text-[#00ADB5] cursor-pointer"
-                >replay</span
-            >
+                <span
+                    @click="getRandomParagraph"
+                    class="material-symbols-outlined text-2xl font-bold text-[#00ADB5] cursor-pointer"
+                    >replay</span
+                >
             </div>
         </div>
         </div>
